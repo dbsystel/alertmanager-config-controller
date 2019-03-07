@@ -1,0 +1,103 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "alertmanager.name" . }}
+spec:
+  updateStrategy:
+    type: {{ .Values.updateStrategy }}
+  replicas: {{ .Values.replicaCount }}
+  serviceName: {{ template "alertmanager.name" . }}-ha
+  selector:
+    matchLabels:
+      app: {{ template "alertmanager.name" . }}
+  template:
+    metadata:
+      name: {{ template "alertmanager.name" . }}
+      labels:
+        app: {{ template "alertmanager.name" . }}
+    spec:
+      serviceAccountName: {{ template "alertmanager.name" . }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key:      app
+                    operator: In
+                    values:
+                      -  alertmanager
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+        - name: init-copy-configmap-to-emptydir
+          image: "{{ .Values.init.image.repository }}:{{ .Values.init.image.tag }}"
+          args:
+            - sh
+            - -c
+            - |
+              cp /dummy/alertmanager.yml /start/ ;chmod 666 /start/alertmanager.yml; cp /source/alertmanager.tmpl /config/;chmod 666 /config/alertmanager.tmpl
+          volumeMounts:
+            - name: config-volume
+              mountPath: "/start"
+            - name: alertmanager-empty-config
+              mountPath: "/source"
+            - name: alertmanager-config-emptydir
+              mountPath: "/config"
+            - name: alertmanager-dummy-config
+              mountPath: "/dummy"
+          resources:
+            limits:
+              cpu: {{ .Values.init.resources.limits.cpu }}
+              memory: {{ .Values.init.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.init.resources.requests.cpu }}
+              memory: {{ .Values.init.resources.requests.memory }}
+      containers:
+        - name: {{ template "alertmanager.name" . }}
+          image: "{{ .Values.alertmanager.image.repository }}:{{ .Values.alertmanager.image.tag }}"
+          args:
+            - --config.file={{ .Values.alertmanager.configFile }}
+            - --storage.path={{ .Values.alertmanager.storagePath }}
+          ports:
+            - name: {{ template "alertmanager.name" . }}
+              containerPort: {{ .Values.service.port }}
+            - name: mesh
+              containerPort: {{ .Values.alertmanager.meshListenAddress }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/alertmanager
+            - name: alertmanager
+              mountPath: /alertmanager
+          resources:
+            limits:
+              cpu: {{ .Values.alertmanager.resources.limits.cpu }}
+              memory: {{ .Values.alertmanager.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.alertmanager.resources.requests.cpu }}
+              memory: {{ .Values.alertmanager.resources.requests.memory }}
+        - name: alertmanager-config-controller
+          image: "{{ .Values.alertmanagerConfigController.image.repository }}:{{ .Values.alertmanagerConfigController.image.tag }}"
+          args:
+            - "--config-path={{ .Values.alertmanagerConfigController.path }}"
+            - "--config-template={{ .Values.alertmanagerConfigController.template }}"
+            - "--reload-url={{ .Values.alertmanagerConfigController.url }}"
+            - "--id={{ .Values.alertmanagerConfigController.id }}"
+            - "--key={{ .Values.alertmanagerConfigController.key }}"
+            - "--log-level={{ .Values.alertmanagerConfigController.logLevel }}"
+          volumeMounts:
+            - mountPath: {{ .Values.alertmanagerConfigController.path | quote }}
+              name:      config-volume
+            - mountPath: "/etc/alertmanager"
+              name:      alertmanager-config-emptydir
+      volumes:
+        - name: config-volume
+          emptyDir: {}
+        - name: alertmanager
+          emptyDir: {}
+        - name: alertmanager-config-emptydir
+          emptyDir: {}
+        - name: alertmanager-empty-config
+          configMap:
+            name: alertmanager-empty-config
+        - name: alertmanager-dummy-config
+          configMap:
+            name: alertmanager-dummy-config

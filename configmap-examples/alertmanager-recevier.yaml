@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: receiver
+  annotations:
+    alertmanager.net/receiver: "true"
+    alertmanager.net/id: "0"
+data:
+  test_receiver.yaml: |-
+    - name: default
+          webhook_configs:
+          - send_resolved: true
+            url: http://localhost
+    - name: test1
+      webhook_configs:
+      - send_resolved: true
+        url: http://localhost
+    - name: test2
+          webhook_configs:
+          - send_resolved: true
+            url: http://localhost
+    - name: test3
+          webhook_configs:
+          - send_resolved: true
+            url: http://localhost

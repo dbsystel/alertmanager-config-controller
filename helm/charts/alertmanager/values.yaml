@@ -1,0 +1,64 @@
+# Default values for alertmanager.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+updateStrategy: RollingUpdate
+
+init:
+  image:
+    repository: busybox
+    tag: "1.30"
+  resources:
+    limits:
+      cpu: 10m
+      memory: 10Mi
+    requests:
+      cpu: 1m
+      memory: 5Mi
+
+alertmanager:
+  image:
+    repository: prom/alertmanager
+    tag: v0.16.1
+  configFile: "/etc/alertmanager/alertmanager.yml"
+  storagePath: "/alertmanager"
+  meshListenAddress: 6783
+  resources:
+    limits:
+      cpu: 20m
+      memory: 64Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
+alertmanagerConfigController:
+  image:
+    repository: dockerregistry/devops/alertmanager-config-controller
+    tag: 0.1.0
+  url: "http://localhost:9093/-/reload"
+  id: "0"
+  path: "/etc/config"
+  template: "/etc/alertmanager/alertmanager.tmpl"
+  logLevel: "info"
+  key: "q5!sder6P"
+
+service:
+  port: 9093
+
+ingress:
+  host: alertmanager.xxx.yyy
+# alertmanager.ctmpl
+#
+
+route_dummy:
+  group_by: ['alertname', 'instance']
+  group_wait: 1m
+  group_interval: 5m
+  repeat_interval: 7d
+  receiver: dummy
+receivers_dummy:
+  - name: dummy
+    webhook_configs:
+      - send_resolved: true
+        url: "http://localhost"
