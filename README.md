@@ -69,7 +69,7 @@ $ glide install
 go build -v -i -o ./bin/alertmanager-config-controller ./cmd # on Linux
 GOOS=linux CGO_ENABLED=0 go build -v -i -o ./bin/alertmanager-config-controller ./cmd # on macOS/Windows
 ```
-To build a docker image out of it, look at provided [Dockerfile](docker/Dockerfile) example.
+To build a docker image out of it, look at provided [Dockerfile](Dockerfile) example.
 
 
 ## Deployment

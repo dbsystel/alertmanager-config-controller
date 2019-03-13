@@ -10,10 +10,10 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/dbsystel/alertmanager-config-controller/alertmanager"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	alcf "github.com/prometheus/alertmanager/config"
-	"github.com/dbsystel/alertmanager-config-controller/alertmanager"
 	"k8s.io/api/core/v1"
 )
 
@@ -74,7 +74,7 @@ func (c *Controller) Create(obj interface{}) {
 		} else if isAlertmanagerReceiver && strings.Contains(err.Error(), "not unique") {
 			c.createBackfile(configmapObj, "receiver")
 			c.deleteConfig(configmapObj)
-		} else {
+		} else if !isAlertmanagerConfig {
 			c.deleteConfig(configmapObj)
 		}
 	} else {
@@ -185,6 +185,11 @@ func (c *Controller) Update(oldobj, newobj interface{}) {
 			}
 		} else if isAlertmanagerConfig && key == c.a.Key {
 			c.createConfig(newConfigmapObj)
+			files, _ := ioutil.ReadDir(c.a.ConfigPath + "/backup-receivers")
+			if len(files) > 0 {
+				level.Debug(c.logger).Log("msg", "Checking backup receivers...")
+				c.checkBackupReceivers()
+			}
 		}
 		err := c.buildConfig()
 		if err == nil {
@@ -204,7 +209,7 @@ func (c *Controller) Update(oldobj, newobj interface{}) {
 		} else if isAlertmanagerReceiver && strings.Contains(err.Error(), "not unique") {
 			c.createBackfile(newConfigmapObj, "receiver")
 			c.deleteConfig(newConfigmapObj)
-		}else {
+		} else if !isAlertmanagerConfig{
 			c.deleteConfig(newConfigmapObj)
 		}
 	} else {
@@ -246,8 +251,16 @@ func (c *Controller) createConfig(configmapObj *v1.ConfigMap) {
 		}
 	}
 
+
+
 	for k, v := range configmapObj.Data {
-		filename := configmapObj.Namespace + "-" + configmapObj.Name + "-" + k
+		filename := ""
+		if typ == "config" {
+			filename = k
+		} else {
+			filename = configmapObj.Namespace + "-" + configmapObj.Name + "-" + k
+		}
+
 		level.Info(c.logger).Log(
 			"msg", "Creating " + typ + ": " + k,
 			"namespace", configmapObj.Namespace,
