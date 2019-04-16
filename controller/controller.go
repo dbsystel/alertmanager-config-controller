@@ -397,6 +397,8 @@ func (c *Controller) checkBackupRoutes() {
 				level.Error(c.logger).Log("msg", "Failed to delete route: " + routeFile, "err", err.Error())
 			}
 			level.Debug(c.logger).Log("msg", "Route is available", "route", routeFile)
+			c.checkBackupConfigs()
+			break
 		} else {
 			level.Debug(c.logger).Log("msg", "Route is unavailable", "route", routeFile, "err", configErr)
 		}
@@ -446,6 +448,8 @@ func (c *Controller) checkBackupReceivers() {
 				level.Error(c.logger).Log("msg", "Failed to delete receiver: " + receiverFile, "err", err.Error())
 			}
 			level.Debug(c.logger).Log("msg", "Receiver is available", "receiver", receiverFile)
+			c.checkBackupConfigs()
+			break
 		} else {
 			level.Debug(c.logger).Log("msg", "Route is unavailable", "receiver", receiverFile, "err", configErr)
 		}
