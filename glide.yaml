@@ -4,4 +4,4 @@ import:
 - package: github.com/go-kit/kit/log
 - package: github.com/dbsystel/kube-controller-dbsystel-go-common
 - package: github.com/prometheus/alertmanager
-  version: v0.16.1
+  version: v0.17.0
