@@ -149,16 +149,22 @@ func (c *Controller) Delete(obj interface{}) {
 func (c *Controller) Update(oldobj, newobj interface{}) {
 	newConfigmapObj := newobj.(*v1.ConfigMap)
 	oldConfigmapObj := oldobj.(*v1.ConfigMap)
-	newId, _       := newConfigmapObj.Annotations["alertmanager.net/id"]
-	oldId, _       := oldConfigmapObj.Annotations["alertmanager.net/id"]
-	route, _       := newConfigmapObj.Annotations["alertmanager.net/route"]
-	receiver, _    := newConfigmapObj.Annotations["alertmanager.net/receiver"]
-	inhibitRule, _ := newConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
+	newId, _          := newConfigmapObj.Annotations["alertmanager.net/id"]
+	oldId, _          := oldConfigmapObj.Annotations["alertmanager.net/id"]
+	route, _          := newConfigmapObj.Annotations["alertmanager.net/route"]
+	oldRoute, _       := oldConfigmapObj.Annotations["alertmanager.net/route"]
+	receiver, _       := newConfigmapObj.Annotations["alertmanager.net/receiver"]
+	oldReceiver, _    := oldConfigmapObj.Annotations["alertmanager.net/receiver"]
+	inhibitRule, _    := newConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
+	oldInhibitRule, _ := oldConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
 	config, _ := newConfigmapObj.Annotations["alertmanager.net/config"]
 	key, _    := newConfigmapObj.Annotations["alertmanager.net/key"]
-	isAlertmanagerRoute, _       := strconv.ParseBool(route)
+	isAlertmanagerRoute, _           := strconv.ParseBool(route)
+	isOldAlertmanagerRoute, _       := strconv.ParseBool(oldRoute)
 	isAlertmanagerReceiver, _    := strconv.ParseBool(receiver)
+	isOldAlertmanagerReceiver, _    := strconv.ParseBool(oldReceiver)
 	isAlertmanagerInhibitRule, _ := strconv.ParseBool(inhibitRule)
+	isOldAlertmanagerInhibitRule, _ := strconv.ParseBool(oldInhibitRule)
 	isAlertmanagerConfig, _      := strconv.ParseBool(config)
 	newAlertmanagerId, _ := strconv.Atoi(newId)
 	oldAlertmanagerId, _ := strconv.Atoi(oldId)
@@ -167,33 +173,27 @@ func (c *Controller) Update(oldobj, newobj interface{}) {
 		level.Debug(c.logger).Log("msg", "Skipping automatically updated configmap:" + newConfigmapObj.Name)
 		return
 	}
-	if (oldAlertmanagerId == c.a.Id || newAlertmanagerId == c.a.Id) && (isAlertmanagerRoute || isAlertmanagerReceiver || isAlertmanagerConfig || isAlertmanagerInhibitRule){
-		if isAlertmanagerReceiver {
-			if oldAlertmanagerId == c.a.Id {
+	if (oldAlertmanagerId == c.a.Id || newAlertmanagerId == c.a.Id) && (isOldAlertmanagerRoute || isAlertmanagerRoute || isOldAlertmanagerReceiver || isAlertmanagerReceiver || isOldAlertmanagerInhibitRule || isAlertmanagerConfig || isAlertmanagerInhibitRule){
+
+		if oldAlertmanagerId == c.a.Id {
+			if isOldAlertmanagerReceiver {
 				c.deleteConfig(oldConfigmapObj)
 				c.deleteBackupFile(oldConfigmapObj, "receiver")
 			}
-			if newAlertmanagerId == c.a.Id {
-				c.createConfig(newConfigmapObj)
-			}
-		} else if isAlertmanagerRoute {
-			if oldAlertmanagerId == c.a.Id {
+			if isOldAlertmanagerRoute {
 				c.deleteConfig(oldConfigmapObj)
 				c.deleteBackupFile(oldConfigmapObj, "route")
 			}
-			if newAlertmanagerId == c.a.Id {
-				c.createConfig(newConfigmapObj)
-			}
-		} else if isAlertmanagerInhibitRule {
-			if oldAlertmanagerId == c.a.Id {
+			if isOldAlertmanagerInhibitRule {
 				c.deleteConfig(oldConfigmapObj)
 				c.deleteBackupFile(oldConfigmapObj, "inhibit rule")
 			}
-			if newAlertmanagerId == c.a.Id {
+		}
+
+		if newAlertmanagerId == c.a.Id {
+			if (isAlertmanagerReceiver || isAlertmanagerRoute || isAlertmanagerInhibitRule) || (isAlertmanagerConfig && key == c.a.Key){
 				c.createConfig(newConfigmapObj)
 			}
-		} else if isAlertmanagerConfig && key == c.a.Key {
-			c.createConfig(newConfigmapObj)
 		}
 
 		c.checkBackupConfigs()
