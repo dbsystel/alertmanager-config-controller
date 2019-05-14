@@ -57,13 +57,6 @@ ConfigMap examples can be found [here](configmap-examples).
 ```
 
 ## Development
-### Dependencies
-[Glide](https://glide.sh/) is a package management tool for Go. To install dependencies:
-```console
-$ glide update
-$ glide install
-```
-
 ### Build
 ```
 go build -v -i -o ./bin/alertmanager-config-controller ./cmd # on Linux
