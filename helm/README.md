@@ -32,7 +32,7 @@ Parameter | Description | Default
 `init.resources.requests.cpu` | init container resources limits for cpu | `1m`
 `init.resources.requests.memory` | init container resources limits for memory | `5Mi`
 `alertmanager.image.repository` | alertmanager container image repository | `prom/alertmanager`
-`alertmanager.image.tag` | alertmanager container image tag | `v0.16.1`
+`alertmanager.image.tag` | alertmanager container image tag | `v0.17.0`
 `alertmanager.configFile` | Alertmanager config file | `/etc/alertmanager/alertmanager.yml`
 `alertmanager.storagePath` | Alertmanager storage path | `/alertmanager`
 `alertmanager.meshListenAddress` | Alertmanager mesh listen address | `6783`

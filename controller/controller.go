@@ -14,6 +14,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	alcf "github.com/prometheus/alertmanager/config"
+	"gopkg.in/yaml.v2"
 	"k8s.io/api/core/v1"
 )
 
@@ -148,16 +149,22 @@ func (c *Controller) Delete(obj interface{}) {
 func (c *Controller) Update(oldobj, newobj interface{}) {
 	newConfigmapObj := newobj.(*v1.ConfigMap)
 	oldConfigmapObj := oldobj.(*v1.ConfigMap)
-	newId, _       := newConfigmapObj.Annotations["alertmanager.net/id"]
-	oldId, _       := oldConfigmapObj.Annotations["alertmanager.net/id"]
-	route, _       := newConfigmapObj.Annotations["alertmanager.net/route"]
-	receiver, _    := newConfigmapObj.Annotations["alertmanager.net/receiver"]
-	inhibitRule, _ := newConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
+	newId, _          := newConfigmapObj.Annotations["alertmanager.net/id"]
+	oldId, _          := oldConfigmapObj.Annotations["alertmanager.net/id"]
+	route, _          := newConfigmapObj.Annotations["alertmanager.net/route"]
+	oldRoute, _       := oldConfigmapObj.Annotations["alertmanager.net/route"]
+	receiver, _       := newConfigmapObj.Annotations["alertmanager.net/receiver"]
+	oldReceiver, _    := oldConfigmapObj.Annotations["alertmanager.net/receiver"]
+	inhibitRule, _    := newConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
+	oldInhibitRule, _ := oldConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
 	config, _ := newConfigmapObj.Annotations["alertmanager.net/config"]
 	key, _    := newConfigmapObj.Annotations["alertmanager.net/key"]
-	isAlertmanagerRoute, _       := strconv.ParseBool(route)
+	isAlertmanagerRoute, _           := strconv.ParseBool(route)
+	isOldAlertmanagerRoute, _       := strconv.ParseBool(oldRoute)
 	isAlertmanagerReceiver, _    := strconv.ParseBool(receiver)
+	isOldAlertmanagerReceiver, _    := strconv.ParseBool(oldReceiver)
 	isAlertmanagerInhibitRule, _ := strconv.ParseBool(inhibitRule)
+	isOldAlertmanagerInhibitRule, _ := strconv.ParseBool(oldInhibitRule)
 	isAlertmanagerConfig, _      := strconv.ParseBool(config)
 	newAlertmanagerId, _ := strconv.Atoi(newId)
 	oldAlertmanagerId, _ := strconv.Atoi(oldId)
@@ -166,33 +173,27 @@ func (c *Controller) Update(oldobj, newobj interface{}) {
 		level.Debug(c.logger).Log("msg", "Skipping automatically updated configmap:" + newConfigmapObj.Name)
 		return
 	}
-	if (oldAlertmanagerId == c.a.Id || newAlertmanagerId == c.a.Id) && (isAlertmanagerRoute || isAlertmanagerReceiver || isAlertmanagerConfig || isAlertmanagerInhibitRule){
-		if isAlertmanagerReceiver {
-			if oldAlertmanagerId == c.a.Id {
+	if (oldAlertmanagerId == c.a.Id || newAlertmanagerId == c.a.Id) && (isOldAlertmanagerRoute || isAlertmanagerRoute || isOldAlertmanagerReceiver || isAlertmanagerReceiver || isOldAlertmanagerInhibitRule || isAlertmanagerConfig || isAlertmanagerInhibitRule){
+
+		if oldAlertmanagerId == c.a.Id {
+			if isOldAlertmanagerReceiver {
 				c.deleteConfig(oldConfigmapObj)
 				c.deleteBackupFile(oldConfigmapObj, "receiver")
 			}
-			if newAlertmanagerId == c.a.Id {
-				c.createConfig(newConfigmapObj)
-			}
-		} else if isAlertmanagerRoute {
-			if oldAlertmanagerId == c.a.Id {
+			if isOldAlertmanagerRoute {
 				c.deleteConfig(oldConfigmapObj)
 				c.deleteBackupFile(oldConfigmapObj, "route")
 			}
-			if newAlertmanagerId == c.a.Id {
-				c.createConfig(newConfigmapObj)
-			}
-		} else if isAlertmanagerInhibitRule {
-			if oldAlertmanagerId == c.a.Id {
+			if isOldAlertmanagerInhibitRule {
 				c.deleteConfig(oldConfigmapObj)
 				c.deleteBackupFile(oldConfigmapObj, "inhibit rule")
 			}
-			if newAlertmanagerId == c.a.Id {
+		}
+
+		if newAlertmanagerId == c.a.Id {
+			if (isAlertmanagerReceiver || isAlertmanagerRoute || isAlertmanagerInhibitRule) || (isAlertmanagerConfig && key == c.a.Key){
 				c.createConfig(newConfigmapObj)
 			}
-		} else if isAlertmanagerConfig && key == c.a.Key {
-			c.createConfig(newConfigmapObj)
 		}
 
 		c.checkBackupConfigs()
@@ -256,7 +257,7 @@ func (c *Controller) createConfig(configmapObj *v1.ConfigMap) {
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		err = os.MkdirAll(path, 0766)
 		if err != nil {
-			level.Error(c.logger).Log("msg", "Failed to create directory", "err", err)
+			level.Error(c.logger).Log("msg", "Failed to create directory", "err", err.Error())
 		}
 	}
 
@@ -269,6 +270,12 @@ func (c *Controller) createConfig(configmapObj *v1.ConfigMap) {
 		} else {
 			filename = configmapObj.Namespace + "-" + configmapObj.Name + "-" + k
 		}
+
+		if typ == "route" {
+			v = c.addContinueIfNotExist(v)
+		}
+
+
 
 		level.Info(c.logger).Log(
 			"msg", "Creating " + typ + ": " + k,
@@ -286,6 +293,26 @@ func (c *Controller) createConfig(configmapObj *v1.ConfigMap) {
 	}
 }
 
+func (c *Controller) addContinueIfNotExist(routeString string) string {
+	m := make([]map[string]interface{}, 1, 1)
+
+	err := yaml.Unmarshal([]byte(routeString), &m)
+	if err != nil {
+		level.Error(c.logger).Log("msg", "Format error in route string: " + routeString, "err", err.Error())
+	}
+
+	for _, route := range m {
+		route["continue"] = true
+	}
+
+	v, err := yaml.Marshal(&m)
+	if err != nil {
+		level.Error(c.logger).Log("msg", "Format error in route yaml", "err", err.Error())
+	}
+
+	return string(v)
+}
+
 // backup currently unavailable configs for further usage
 func (c *Controller) createBackfile(configmapObj *v1.ConfigMap, typ string) {
 	var err error
@@ -294,11 +321,12 @@ func (c *Controller) createBackfile(configmapObj *v1.ConfigMap, typ string) {
 		if _, err = os.Stat(path); os.IsNotExist(err) {
 			err = os.MkdirAll(path, 0766)
 			if err != nil {
-				level.Error(c.logger).Log("msg", "Failed to create backup directory", "err", err)
+				level.Error(c.logger).Log("msg", "Failed to create backup directory", "err", err.Error())
 			}
 		}
 		for k, v := range configmapObj.Data {
 			filename := configmapObj.Namespace + "-" + configmapObj.Name + "-" + k
+			v = c.addContinueIfNotExist(v)
 			level.Debug(c.logger).Log(
 				"msg", "Backup route: " + k + ", and waiting for receiver",
 				"namespace", configmapObj.Namespace,
@@ -314,7 +342,7 @@ func (c *Controller) createBackfile(configmapObj *v1.ConfigMap, typ string) {
 		if _, err = os.Stat(path); os.IsNotExist(err) {
 			err = os.MkdirAll(path, 0766)
 			if err != nil {
-				level.Error(c.logger).Log("msg", "Failed to create backup directory", "err", err)
+				level.Error(c.logger).Log("msg", "Failed to create backup directory", "err", err.Error())
 			}
 		}
 		for k, v := range configmapObj.Data {
@@ -334,7 +362,7 @@ func (c *Controller) createBackfile(configmapObj *v1.ConfigMap, typ string) {
 		if _, err = os.Stat(path); os.IsNotExist(err) {
 			err = os.MkdirAll(path, 0766)
 			if err != nil {
-				level.Error(c.logger).Log("msg", "Failed to create backup directory", "err", err)
+				level.Error(c.logger).Log("msg", "Failed to create backup directory", "err", err.Error())
 			}
 		}
 		for k, v := range configmapObj.Data {
