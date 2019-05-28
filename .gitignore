@@ -1,2 +1,8 @@
 .idea/*
+.vscode/*
 bin/*
+dist/*
+vendor/*
+scripts/saved_objects/*
+coverage.txt
+alertmanager-config-controller
