@@ -2,45 +2,48 @@ package alertmanager
 
 import (
 	"fmt"
-	"github.com/go-kit/kit/log/level"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 )
 
+// APIClient of alertmanager
 type APIClient struct {
-	Url            *url.URL
+	URL            *url.URL
 	ConfigPath     string
 	ConfigTemplate string
 	HTTPClient     *http.Client
-	Id             int
+	ID             int
 	Key            string
-	logger     log.Logger
+	logger         log.Logger
 }
 
-type AlertmanagerConfig struct {
+// Config of alertmanager
+type Config struct {
 	Receivers    string
 	Routes       string
 	InhibitRules string
 }
 
-// reload alertmanager
-func (c *APIClient) Reload() (error,int) {
-	return c.doPost(c.Url.String())
+// Reload alertmanager
+func (c *APIClient) Reload() (int, error) {
+	return c.doPost(c.URL.String())
 }
 
 // do post request
-func (c *APIClient) doPost(url string) (error,int) {
+func (c *APIClient) doPost(url string) (int, error) {
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
-		return err, 0
+		return 0, err
 	}
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		for strings.Contains(err.Error(), "connection refused") {
+			//nolint:errcheck
 			level.Error(c.logger).Log("msg", "Failed to reload alertmanager.yml. Perhaps Alertmanager is not ready. Waiting for 8 seconds and retry again...", "err", err.Error())
 			time.Sleep(8 * time.Second)
 			resp, err = c.HTTPClient.Do(req)
@@ -50,25 +53,25 @@ func (c *APIClient) doPost(url string) (error,int) {
 		}
 	}
 	if err != nil {
-		return err, 0
+		return 0, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code returned from Alertmanager (got: %d, expected: 200, msg:%s)", resp.StatusCode, resp.Status), resp.StatusCode
+		return resp.StatusCode, fmt.Errorf("unexpected status code returned from Alertmanager (got: %d, expected: 200, msg:%s)", resp.StatusCode, resp.Status)
 	}
-	return nil, 0
+	return 0, nil
 }
 
-// return a new APIClient
-func New(baseUrl *url.URL, configPath string, configTemplate string, id int, key string, logger log.Logger) *APIClient {
+// New return an APIClient
+func New(baseURL *url.URL, configPath string, configTemplate string, id int, key string, logger log.Logger) *APIClient {
 	return &APIClient{
-		Url:    baseUrl,
-		ConfigPath: configPath,
-		ConfigTemplate : configTemplate,
-		HTTPClient: http.DefaultClient,
-		Id:         id,
-		Key:        key,
-		logger:     logger,
+		URL:            baseURL,
+		ConfigPath:     configPath,
+		ConfigTemplate: configTemplate,
+		HTTPClient:     http.DefaultClient,
+		ID:             id,
+		Key:            key,
+		logger:         logger,
 	}
 }

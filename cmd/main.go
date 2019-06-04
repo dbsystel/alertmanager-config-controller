@@ -9,7 +9,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/go-kit/kit/log/level"
 	"github.com/dbsystel/alertmanager-config-controller/alertmanager"
 	"github.com/dbsystel/alertmanager-config-controller/controller"
 	"github.com/dbsystel/kube-controller-dbsystel-go-common/controller/configmap"
@@ -17,17 +16,18 @@ import (
 	k8sflag "github.com/dbsystel/kube-controller-dbsystel-go-common/kubernetes/flag"
 	opslog "github.com/dbsystel/kube-controller-dbsystel-go-common/log"
 	logflag "github.com/dbsystel/kube-controller-dbsystel-go-common/log/flag"
+	"github.com/go-kit/kit/log/level"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
 	app = kingpin.New(filepath.Base(os.Args[0]), "Alertmanager Controller")
 	//Here you can define more flags for your application
-	configPath = app.Flag("config-path", "The location to save rule and config files to").Required().String()
+	configPath     = app.Flag("config-path", "The location to save rule and config files to").Required().String()
 	configTemplate = app.Flag("config-template", "The template of alertmanager.yml").Required().String()
-	id = app.Flag("id", "The id of Alertmanager").Default("0").Int()
-	key = app.Flag("key", "The unique key for alertmanager config").String()
-	reloadUrl = app.Flag("reload-url", "The url to issue requests to reload Alertmanager to").Required().String()
+	id             = app.Flag("id", "The id of Alertmanager").Default("0").Int()
+	key            = app.Flag("key", "The unique key for alertmanager config").String()
+	reloadURL      = app.Flag("reload-url", "The url to issue requests to reload Alertmanager to").Required().String()
 )
 
 func main() {
@@ -54,23 +54,27 @@ func main() {
 		os.Exit(2)
 	}
 	//First usage of initialized logger for testing
+	//nolint:errcheck
 	level.Debug(logger).Log("msg", "Logging initiated...")
 	//Initialize new k8s client from common k8s package
 	k8sClient, err := kubernetes.NewClientSet(runOutsideCluster)
 	if err != nil {
+		//nolint:errcheck
 		level.Error(logger).Log("msg", err.Error())
 		app.Usage(os.Args[1:])
 		os.Exit(2)
 	}
 
-	rUrl, err := url.Parse(*reloadUrl)
+	URL, err := url.Parse(*reloadURL)
 	if err != nil {
-		level.Error(logger).Log("msg", "Alertmanager reload URL could not be parsed: " + *reloadUrl)
+		//nolint:errcheck
+		level.Error(logger).Log("msg", "Alertmanager reload URL could not be parsed: "+*reloadURL)
 		os.Exit(2)
 	}
 
-	a := alertmanager.New(rUrl, *configPath, *configTemplate, *id, *key, logger)
+	a := alertmanager.New(URL, *configPath, *configTemplate, *id, *key, logger)
 
+	//nolint:errcheck
 	level.Info(logger).Log("msg", "Starting Alertmanager Controller...")
 	sigs := make(chan os.Signal, 1) // Create channel to receive OS signals
 	stop := make(chan struct{})     // Create channel to receive stop signal
@@ -88,6 +92,7 @@ func main() {
 
 	<-sigs // Wait for signals (this hangs until a signal arrives)
 
+	//nolint:errcheck
 	level.Info(logger).Log("msg", "Shutting down...")
 
 	close(stop) // Tell goroutines to stop themselves
