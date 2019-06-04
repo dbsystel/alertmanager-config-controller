@@ -44,7 +44,9 @@ func (c *APIClient) doPost(url string) (int, error) {
 	if err != nil {
 		for strings.Contains(err.Error(), "connection refused") {
 			//nolint:errcheck
-			level.Error(c.logger).Log("msg", "Failed to reload alertmanager.yml. Perhaps Alertmanager is not ready. Waiting for 8 seconds and retry again...", "err", err.Error())
+			level.Error(c.logger).Log(
+				"msg", "Failed to reload alertmanager.yml. Perhaps Alertmanager is not ready. Waiting for 8 seconds and retry again...",
+				"err", err.Error())
 			time.Sleep(8 * time.Second)
 			resp, err = c.HTTPClient.Do(req)
 			if err == nil {
@@ -58,7 +60,8 @@ func (c *APIClient) doPost(url string) (int, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return resp.StatusCode, fmt.Errorf("unexpected status code returned from Alertmanager (got: %d, expected: 200, msg:%s)", resp.StatusCode, resp.Status)
+		return resp.StatusCode, fmt.Errorf("unexpected status code returned from Alertmanager (got: %d, expected: 200, msg:%s)",
+			resp.StatusCode, resp.Status)
 	}
 	return 0, nil
 }

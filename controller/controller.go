@@ -18,6 +18,12 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+var (
+	receiverConst    = "receiver"
+	routeConst       = "route"
+	inhibitRuleConst = "inhibit rule"
+)
+
 // Controller wrapper for alertmanager
 type Controller struct {
 	logger log.Logger
@@ -35,19 +41,23 @@ func New(a alertmanager.APIClient, logger log.Logger) *Controller {
 // Create is called when a configmap is created
 func (c *Controller) Create(obj interface{}) {
 	configmapObj := obj.(*v1.ConfigMap)
-	id, _ := configmapObj.Annotations["alertmanager.net/id"]
-	route, _ := configmapObj.Annotations["alertmanager.net/route"]
-	receiver, _ := configmapObj.Annotations["alertmanager.net/receiver"]
-	inhibitRule, _ := configmapObj.Annotations["alertmanager.net/inhibit_rule"]
-	config, _ := configmapObj.Annotations["alertmanager.net/config"]
-	key, _ := configmapObj.Annotations["alertmanager.net/key"]
+	id := configmapObj.Annotations["alertmanager.net/id"]
+	route := configmapObj.Annotations["alertmanager.net/route"]
+	receiver := configmapObj.Annotations["alertmanager.net/receiver"]
+	inhibitRule := configmapObj.Annotations["alertmanager.net/inhibit_rule"]
+	config := configmapObj.Annotations["alertmanager.net/config"]
+	key := configmapObj.Annotations["alertmanager.net/key"]
 	isAlertmanagerRoute, _ := strconv.ParseBool(route)
 	isAlertmanagerReceiver, _ := strconv.ParseBool(receiver)
 	isAlertmanagerInhibitRule, _ := strconv.ParseBool(inhibitRule)
 	isAlertmanagerConfig, _ := strconv.ParseBool(config)
 	alertmanagerID, _ := strconv.Atoi(id)
 
-	if alertmanagerID == c.a.ID && ((isAlertmanagerConfig && key == c.a.Key) || isAlertmanagerRoute || isAlertmanagerReceiver || isAlertmanagerInhibitRule) {
+	if alertmanagerID == c.a.ID &&
+		((isAlertmanagerConfig && key == c.a.Key) ||
+			isAlertmanagerRoute ||
+			isAlertmanagerReceiver ||
+			isAlertmanagerInhibitRule) {
 		c.createConfig(configmapObj)
 
 		c.checkBackupConfigs()
@@ -68,13 +78,13 @@ func (c *Controller) Create(obj interface{}) {
 				level.Info(c.logger).Log("msg", "Succeeded: Reloaded Alertmanager")
 			}
 		} else if isAlertmanagerRoute {
-			c.createBackfile(configmapObj, "route")
+			c.createBackfile(configmapObj, routeConst)
 			c.deleteConfig(configmapObj)
 		} else if isAlertmanagerReceiver {
-			c.createBackfile(configmapObj, "receiver")
+			c.createBackfile(configmapObj, receiverConst)
 			c.deleteConfig(configmapObj)
 		} else if isAlertmanagerInhibitRule {
-			c.createBackfile(configmapObj, "inhibit rule")
+			c.createBackfile(configmapObj, inhibitRuleConst)
 			c.deleteConfig(configmapObj)
 		} else if !isAlertmanagerConfig {
 			c.deleteConfig(configmapObj)
@@ -109,10 +119,10 @@ func (c *Controller) checkBackupConfigs() {
 // Delete is called when a configmap is deleted
 func (c *Controller) Delete(obj interface{}) {
 	configmapObj := obj.(*v1.ConfigMap)
-	id, _ := configmapObj.Annotations["alertmanager.net/id"]
-	route, _ := configmapObj.Annotations["alertmanager.net/route"]
-	receiver, _ := configmapObj.Annotations["alertmanager.net/receiver"]
-	inhibitRule, _ := configmapObj.Annotations["alertmanager.net/inhibit_rule"]
+	id := configmapObj.Annotations["alertmanager.net/id"]
+	route := configmapObj.Annotations["alertmanager.net/route"]
+	receiver := configmapObj.Annotations["alertmanager.net/receiver"]
+	inhibitRule := configmapObj.Annotations["alertmanager.net/inhibit_rule"]
 	isAlertmanagerRoute, _ := strconv.ParseBool(route)
 	isAlertmanagerReceiver, _ := strconv.ParseBool(receiver)
 	isAlertmanagerInhibitRule, _ := strconv.ParseBool(inhibitRule)
@@ -121,13 +131,13 @@ func (c *Controller) Delete(obj interface{}) {
 	if alertmanagerID == c.a.ID && (isAlertmanagerReceiver || isAlertmanagerRoute || isAlertmanagerInhibitRule) {
 		c.deleteConfig(configmapObj)
 		if isAlertmanagerRoute {
-			c.deleteBackupFile(configmapObj, "route")
+			c.deleteBackupFile(configmapObj, routeConst)
 		}
 		if isAlertmanagerReceiver {
-			c.deleteBackupFile(configmapObj, "receiver")
+			c.deleteBackupFile(configmapObj, receiverConst)
 		}
 		if isAlertmanagerInhibitRule {
-			c.deleteBackupFile(configmapObj, "inhibit rule")
+			c.deleteBackupFile(configmapObj, inhibitRuleConst)
 		}
 
 		c.checkBackupConfigs()
@@ -160,16 +170,16 @@ func (c *Controller) Delete(obj interface{}) {
 func (c *Controller) Update(oldobj, newobj interface{}) {
 	newConfigmapObj := newobj.(*v1.ConfigMap)
 	oldConfigmapObj := oldobj.(*v1.ConfigMap)
-	newID, _ := newConfigmapObj.Annotations["alertmanager.net/id"]
-	oldID, _ := oldConfigmapObj.Annotations["alertmanager.net/id"]
-	route, _ := newConfigmapObj.Annotations["alertmanager.net/route"]
-	oldRoute, _ := oldConfigmapObj.Annotations["alertmanager.net/route"]
-	receiver, _ := newConfigmapObj.Annotations["alertmanager.net/receiver"]
-	oldReceiver, _ := oldConfigmapObj.Annotations["alertmanager.net/receiver"]
-	inhibitRule, _ := newConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
-	oldInhibitRule, _ := oldConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
-	config, _ := newConfigmapObj.Annotations["alertmanager.net/config"]
-	key, _ := newConfigmapObj.Annotations["alertmanager.net/key"]
+	newID := newConfigmapObj.Annotations["alertmanager.net/id"]
+	oldID := oldConfigmapObj.Annotations["alertmanager.net/id"]
+	route := newConfigmapObj.Annotations["alertmanager.net/route"]
+	oldRoute := oldConfigmapObj.Annotations["alertmanager.net/route"]
+	receiver := newConfigmapObj.Annotations["alertmanager.net/receiver"]
+	oldReceiver := oldConfigmapObj.Annotations["alertmanager.net/receiver"]
+	inhibitRule := newConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
+	oldInhibitRule := oldConfigmapObj.Annotations["alertmanager.net/inhibit_rule"]
+	config := newConfigmapObj.Annotations["alertmanager.net/config"]
+	key := newConfigmapObj.Annotations["alertmanager.net/key"]
 	isAlertmanagerRoute, _ := strconv.ParseBool(route)
 	isOldAlertmanagerRoute, _ := strconv.ParseBool(oldRoute)
 	isAlertmanagerReceiver, _ := strconv.ParseBool(receiver)
@@ -185,25 +195,35 @@ func (c *Controller) Update(oldobj, newobj interface{}) {
 		level.Debug(c.logger).Log("msg", "Skipping automatically updated configmap:"+newConfigmapObj.Name)
 		return
 	}
-	if (oldAlertmanagerID == c.a.ID || newAlertmanagerID == c.a.ID) && (isOldAlertmanagerRoute || isAlertmanagerRoute || isOldAlertmanagerReceiver || isAlertmanagerReceiver || isOldAlertmanagerInhibitRule || isAlertmanagerConfig || isAlertmanagerInhibitRule) {
+	if (oldAlertmanagerID == c.a.ID || newAlertmanagerID == c.a.ID) &&
+		(isOldAlertmanagerRoute ||
+			isAlertmanagerRoute ||
+			isOldAlertmanagerReceiver ||
+			isAlertmanagerReceiver ||
+			isOldAlertmanagerInhibitRule ||
+			isAlertmanagerConfig ||
+			isAlertmanagerInhibitRule) {
 
 		if oldAlertmanagerID == c.a.ID {
 			if isOldAlertmanagerReceiver {
 				c.deleteConfig(oldConfigmapObj)
-				c.deleteBackupFile(oldConfigmapObj, "receiver")
+				c.deleteBackupFile(oldConfigmapObj, receiverConst)
 			}
 			if isOldAlertmanagerRoute {
 				c.deleteConfig(oldConfigmapObj)
-				c.deleteBackupFile(oldConfigmapObj, "route")
+				c.deleteBackupFile(oldConfigmapObj, routeConst)
 			}
 			if isOldAlertmanagerInhibitRule {
 				c.deleteConfig(oldConfigmapObj)
-				c.deleteBackupFile(oldConfigmapObj, "inhibit rule")
+				c.deleteBackupFile(oldConfigmapObj, inhibitRuleConst)
 			}
 		}
 
 		if newAlertmanagerID == c.a.ID {
-			if (isAlertmanagerReceiver || isAlertmanagerRoute || isAlertmanagerInhibitRule) || (isAlertmanagerConfig && key == c.a.Key) {
+			if (isAlertmanagerReceiver ||
+				isAlertmanagerRoute ||
+				isAlertmanagerInhibitRule) ||
+				(isAlertmanagerConfig && key == c.a.Key) {
 				c.createConfig(newConfigmapObj)
 			}
 		}
@@ -226,13 +246,13 @@ func (c *Controller) Update(oldobj, newobj interface{}) {
 				level.Info(c.logger).Log("msg", "Succeeded: Reloaded Alertmanager")
 			}
 		} else if isAlertmanagerRoute {
-			c.createBackfile(newConfigmapObj, "route")
+			c.createBackfile(newConfigmapObj, routeConst)
 			c.deleteConfig(newConfigmapObj)
 		} else if isAlertmanagerReceiver {
-			c.createBackfile(newConfigmapObj, "receiver")
+			c.createBackfile(newConfigmapObj, receiverConst)
 			c.deleteConfig(newConfigmapObj)
 		} else if isAlertmanagerInhibitRule {
-			c.createBackfile(newConfigmapObj, "inhibit rule")
+			c.createBackfile(newConfigmapObj, inhibitRuleConst)
 			c.deleteConfig(newConfigmapObj)
 		} else if !isAlertmanagerConfig {
 			c.deleteConfig(newConfigmapObj)
@@ -246,10 +266,10 @@ func (c *Controller) Update(oldobj, newobj interface{}) {
 // save configs(receivers, routes, inhibitrules, config template) into storage
 func (c *Controller) createConfig(configmapObj *v1.ConfigMap) {
 	var err error
-	route, _ := configmapObj.Annotations["alertmanager.net/route"]
-	receiver, _ := configmapObj.Annotations["alertmanager.net/receiver"]
-	inhibitRule, _ := configmapObj.Annotations["alertmanager.net/inhibit_rule"]
-	config, _ := configmapObj.Annotations["alertmanager.net/config"]
+	route := configmapObj.Annotations["alertmanager.net/route"]
+	receiver := configmapObj.Annotations["alertmanager.net/receiver"]
+	inhibitRule := configmapObj.Annotations["alertmanager.net/inhibit_rule"]
+	config := configmapObj.Annotations["alertmanager.net/config"]
 	isAlertmanagerRoute, _ := strconv.ParseBool(route)
 	isAlertmanagerReceiver, _ := strconv.ParseBool(receiver)
 	isAlertmanagerInhibitRule, _ := strconv.ParseBool(inhibitRule)
@@ -261,13 +281,13 @@ func (c *Controller) createConfig(configmapObj *v1.ConfigMap) {
 		typ = "config"
 	} else if isAlertmanagerReceiver {
 		path = c.a.ConfigPath + "/receivers/"
-		typ = "receiver"
+		typ = receiverConst
 	} else if isAlertmanagerRoute {
 		path = c.a.ConfigPath + "/routes/"
-		typ = "route"
+		typ = routeConst
 	} else if isAlertmanagerInhibitRule {
 		path = c.a.ConfigPath + "/inhibit-rules/"
-		typ = "inhibit rule"
+		typ = inhibitRuleConst
 	}
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
@@ -286,7 +306,7 @@ func (c *Controller) createConfig(configmapObj *v1.ConfigMap) {
 			filename = configmapObj.Namespace + "-" + configmapObj.Name + "-" + k
 		}
 
-		if typ == "route" {
+		if typ == routeConst {
 			v = c.addContinueIfNotExist(v)
 		}
 
@@ -309,7 +329,7 @@ func (c *Controller) createConfig(configmapObj *v1.ConfigMap) {
 }
 
 func (c *Controller) addContinueIfNotExist(routeString string) string {
-	m := make([]map[string]interface{}, 1, 1)
+	m := make([]map[string]interface{}, 1)
 
 	err := yaml.Unmarshal([]byte(routeString), &m)
 	if err != nil {
@@ -333,7 +353,7 @@ func (c *Controller) addContinueIfNotExist(routeString string) string {
 // backup currently unavailable configs for further usage
 func (c *Controller) createBackfile(configmapObj *v1.ConfigMap, typ string) {
 	var err error
-	if typ == "route" {
+	if typ == routeConst {
 		path := c.a.ConfigPath + "/backup-routes/"
 		if _, err = os.Stat(path); os.IsNotExist(err) {
 			err = os.MkdirAll(path, 0766)
@@ -357,7 +377,7 @@ func (c *Controller) createBackfile(configmapObj *v1.ConfigMap, typ string) {
 				level.Error(c.logger).Log("msg", "Failed to backup route: "+k, "err", err.Error())
 			}
 		}
-	} else if typ == "receiver" {
+	} else if typ == receiverConst {
 		path := c.a.ConfigPath + "/backup-receivers/"
 		if _, err = os.Stat(path); os.IsNotExist(err) {
 			err = os.MkdirAll(path, 0766)
@@ -380,7 +400,7 @@ func (c *Controller) createBackfile(configmapObj *v1.ConfigMap, typ string) {
 				level.Error(c.logger).Log("msg", "Failed to backup receiver: "+k, "err", err.Error())
 			}
 		}
-	} else if typ == "inhibit rule" {
+	} else if typ == inhibitRuleConst {
 		path := c.a.ConfigPath + "/backup-inhibit-rules/"
 		if _, err = os.Stat(path); os.IsNotExist(err) {
 			err = os.MkdirAll(path, 0766)
@@ -447,6 +467,10 @@ func (c *Controller) checkBackupRoutes() {
 
 		var tpl bytes.Buffer
 		err = t.Execute(&tpl, alertmanagerConfig)
+		if err != nil {
+			//nolint:errcheck
+			level.Error(c.logger).Log("msg", "Failed to template alertmanager config", "err", err.Error())
+		}
 		_, configErr := alcf.Load(tpl.String())
 		if configErr == nil {
 			c.copyFile(routeFile, c.a.ConfigPath+"/routes/"+filepath.Base(routeFile))
@@ -505,6 +529,10 @@ func (c *Controller) checkBackupReceivers() {
 		alertmanagerConfig.Receivers = newReceivers
 		var tpl bytes.Buffer
 		err = t.Execute(&tpl, alertmanagerConfig)
+		if err != nil {
+			//nolint:errcheck
+			level.Error(c.logger).Log("msg", "Failed to template alertmanager config", "err", err.Error())
+		}
 		_, configErr := alcf.Load(tpl.String())
 		if configErr == nil {
 			c.copyFile(receiverFile, c.a.ConfigPath+"/receivers/"+filepath.Base(receiverFile))
@@ -549,6 +577,10 @@ func (c *Controller) buildConfig() error {
 
 	var tpl bytes.Buffer
 	err = t.Execute(&tpl, alertmanagerConfig)
+	if err != nil {
+		//nolint:errcheck
+		level.Error(c.logger).Log("msg", "Failed to template alertmanager config", "err", err.Error())
+	}
 	_, configErr := alcf.Load(tpl.String())
 	if configErr == nil {
 		f, err := os.Create(c.a.ConfigPath + "/alertmanager.yml")
@@ -599,13 +631,13 @@ func (c *Controller) deleteConfig(configmapObj *v1.ConfigMap) {
 	typ := ""
 	if isAlertmanagerReceiver {
 		path = c.a.ConfigPath + "/receivers/"
-		typ = "receiver"
+		typ = receiverConst
 	} else if isAlertmanagerRoute {
 		path = c.a.ConfigPath + "/routes/"
-		typ = "route"
+		typ = routeConst
 	} else if isAlertmanagerInhibitRule {
 		path = c.a.ConfigPath + "/inhibit-rules/"
-		typ = "inhibit rule"
+		typ = inhibitRuleConst
 	}
 
 	for k := range configmapObj.Data {
@@ -631,7 +663,7 @@ func (c *Controller) deleteConfig(configmapObj *v1.ConfigMap) {
 
 // remove config files from backup storage
 func (c *Controller) deleteBackupFile(configmapObj *v1.ConfigMap, typ string) {
-	if typ == "receiver" {
+	if typ == receiverConst {
 		for k := range configmapObj.Data {
 			filename := configmapObj.Namespace + "-" + configmapObj.Name + "-" + k
 			//nolint:errcheck
@@ -647,7 +679,7 @@ func (c *Controller) deleteBackupFile(configmapObj *v1.ConfigMap, typ string) {
 				level.Debug(c.logger).Log("msg", "Backup receiver does not exist")
 			}
 		}
-	} else if typ == "routes" {
+	} else if typ == routeConst {
 		for k := range configmapObj.Data {
 			filename := configmapObj.Namespace + "-" + configmapObj.Name + "-" + k
 			//nolint:errcheck
@@ -663,7 +695,7 @@ func (c *Controller) deleteBackupFile(configmapObj *v1.ConfigMap, typ string) {
 				level.Debug(c.logger).Log("msg", "Backup route does not exist")
 			}
 		}
-	} else if typ == "inhibit rule" {
+	} else if typ == inhibitRuleConst {
 		for k := range configmapObj.Data {
 			filename := configmapObj.Namespace + "-" + configmapObj.Name + "-" + k
 			//nolint:errcheck
