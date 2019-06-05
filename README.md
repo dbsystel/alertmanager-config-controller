@@ -1,3 +1,6 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build Status](https://travis-ci.org/dbsystel/alertmanager-config-controller.svg)](https://travis-ci.org/dbsystel/alertmanager-config-controller)
+
 # Config Controller for Alertmanager
 
 This Config Controller is based on the [Grafana Operator](https://github.com/tsloughter/grafana-operator) project. The Config Controller should be run within [Kubernetes](https://github.com/kubernetes/kubernetes) as a sidecar with the [Prometheus Alertmanager](https://github.com/prometheus/alertmanager).
@@ -58,12 +61,12 @@ ConfigMap examples can be found [here](configmap-examples).
 
 ## Development
 ### Build
+```sh
+make build
+# to run the linter, tests and build the binary, run
+make ci
 ```
-go build -v -i -o ./bin/alertmanager-config-controller ./cmd # on Linux
-GOOS=linux CGO_ENABLED=0 go build -v -i -o ./bin/alertmanager-config-controller ./cmd # on macOS/Windows
-```
-To build a docker image out of it, look at provided [Dockerfile](Dockerfile) example.
-
+To build a docker image out of it, look at provided [Dockerfile](Dockerfile) example which expects the `alertmanager-config-controller` binary in the same directory.
 
 ## Deployment
 Our preferred way to install alertmanager/alertmanager-config-controller is [Helm](https://helm.sh/). See example installation at our [Helm directory](helm) within this repo.
