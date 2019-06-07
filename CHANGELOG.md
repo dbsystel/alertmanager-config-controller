@@ -1,4 +1,4 @@
-## 1.2.0 / 2019-06-11
+## 0.2.0 / 2019-06-11
 * [ENHANCEMENT] Adds example helm installation charts
 * [ENHANCEMENT] Adds test, lint and build setup
 * [ENHANCEMENT] Adds automatic releasing with goreleaser and travis
