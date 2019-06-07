@@ -52,4 +52,4 @@ dockers:
   - image_templates:
       - "dbsystel/alertmanager-config-controller:latest"
       - "dbsystel/alertmanager-config-controller:{{ .Tag }}"
-      - "dbsystel/alertmanager-config-controller:v{{ .Major }}.{{ .Minor }}"
+      - "dbsystel/alertmanager-config-controller:{{ .Major }}.{{ .Minor }}"
