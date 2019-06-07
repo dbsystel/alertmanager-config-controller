@@ -40,8 +40,8 @@ Parameter | Description | Default
 `alertmanager.resources.limits.memory` | alertmanager container resources limits for memory | `64Mi`
 `alertmanager.resources.requests.cpu` | alertmanager container resources limits for cpu | `10m`
 `alertmanager.resources.requests.memory` | alertmanager container resources limits for memory | `32Mi`
-`alertmanagerConfigController.image.repository` | alertmanager-config-controller container image repository | `dockerregistry/alertmanager-config-controller`
-`alertmanagerConfigController.image.tag` | alertmanager-config-controller container image tag | `0.1.0`
+`alertmanagerConfigController.image.repository` | alertmanager-config-controller container image repository | `dbsystel/alertmanager-config-controller`
+`alertmanagerConfigController.image.tag` | alertmanager-config-controller container image tag | `latest`
 `alertmanagerConfigController.url` | The url to reload alertmanager | `http://alertmanager:9093/-/reload`
 `alertmanagerConfigController.id` | The id to specify alertmanager | `0`
 `alertmanagerConfigController.key` | The key to specify alertmanager config template | `q5!sder6P`

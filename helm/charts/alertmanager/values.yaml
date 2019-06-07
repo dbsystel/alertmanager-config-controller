@@ -34,8 +34,8 @@ alertmanager:
       memory: 32Mi
 alertmanagerConfigController:
   image:
-    repository: dockerregistry/devops/alertmanager-config-controller
-    tag: 0.1.0
+    repository: dbsystel/alertmanager-config-controller
+    tag: latest
   url: "http://localhost:9093/-/reload"
   id: "0"
   path: "/etc/config"

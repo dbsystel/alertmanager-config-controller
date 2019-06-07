@@ -1,3 +1,8 @@
+## 1.2.0 / 2019-06-11
+* [ENHANCEMENT] Adds example helm installation charts
+* [ENHANCEMENT] Adds test, lint and build setup
+* [ENHANCEMENT] Adds automatic releasing with goreleaser and travis
+
 ## 0.1.3 / 2019-05-14
 * [ENHANCEMENT] Automatically add `continue: true` to the first level of route
 * [CHANGE] The controller will delete the config, if the annotation in configmap is switched from `true` to `false`
