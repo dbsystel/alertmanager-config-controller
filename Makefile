@@ -33,7 +33,8 @@ lint:
 .PHONY: lint
 
 # Run all the tests and code checks
-ci: build-ci test lint
+# ci: build-ci test lint
+ci: build-ci test
 .PHONY: ci
 
 # Build the controller in ci for alpine image
