@@ -9,7 +9,7 @@ export GO111MODULE := on
 # Install all the build and lint dependencies
 setup:
 	go mod download
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.16.0
+	# curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.16.0
 .PHONY: setup
 
 # Run all the tests
