@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config-template
+  annotations:
+    alertmanager.net/config: "true"
+    alertmanager.net/id: "0"
+    alertmanager.net/key: "q5!sder6P"
+data:
+  alertmanager.tmpl:  |-
+    global:
+      resolve_timeout: 5m
+      smtp_require_tls: true
+    route:
+      group_by:
+      - alertname
+      - instance
+      group_interval: 5m
+      group_wait: 1m
+      receiver: dummy
+      repeat_interval: 7d
+      routes:
+      {{ .Routes }}
+    receivers:
+    - name: dummy
+      webhook_configs:
+      - send_resolved: true
+        url: http://localhost
+    {{ .Receivers }}
+    inhibit_rules:
+    {{ .InhibitRules }}

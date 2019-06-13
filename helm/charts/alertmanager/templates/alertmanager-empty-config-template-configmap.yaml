@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-empty-config
+data:
+  alertmanager.tmpl:  |-
+    route:
+{{ toYaml .Values.route_dummy | indent 6 }}
+      routes:
+      {{`{{`}} .Routes {{`}}`}}
+    receivers:
+{{ toYaml .Values.receivers_dummy | indent 4 }}
+    {{`{{`}} .Receivers {{`}}`}}
+    inhibit_rules:
+    {{`{{`}} .InhibitRules {{`}}`}}

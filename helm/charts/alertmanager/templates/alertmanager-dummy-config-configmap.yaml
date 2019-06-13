@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-dummy-config
+data:
+  alertmanager.yml:  |-
+    route:
+{{ toYaml .Values.route_dummy | indent 6 }}
+    receivers:
+{{ toYaml .Values.receivers_dummy | indent 4 }}
