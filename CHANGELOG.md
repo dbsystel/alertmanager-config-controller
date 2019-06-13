@@ -1,3 +1,9 @@
+# 0.2.2 / 2019-06-13
+ * [ENHANCEMENT] Updated ci release handling
+
+# 0.2.1 / 2019-06-11
+ * [BUGFIX] Fixed linter errors
+
 ## 0.2.0 / 2019-06-11
 * [ENHANCEMENT] Adds example helm installation charts
 * [ENHANCEMENT] Adds test, lint and build setup
