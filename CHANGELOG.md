@@ -1,3 +1,6 @@
+# 0.2.4 / 2019-06-28
+ * [BUGFIX] Fixed incorrect indentation in configmap examples 
+
 # 0.2.3 / 2019-06-28
  * [BUGFIX] Disabled for now bodyclose checking in linter
  * [BUGFIX] Fixed addContinueIfNotExist handling route
