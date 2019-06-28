@@ -376,7 +376,9 @@ func (c *Controller) createBackfile(configmapObj *v1.ConfigMap, configType strin
 	}
 	for k, v := range configmapObj.Data {
 		filename := configmapObj.Namespace + "-" + configmapObj.Name + "-" + k
-		v = c.addContinueIfNotExist(v)
+		if configType == routeConst {
+			v = c.addContinueIfNotExist(v)
+		}
 		//nolint:errcheck
 		level.Debug(c.logger).Log(
 			"msg", "Backup "+configType+": "+k,
@@ -449,7 +451,7 @@ func (c *Controller) checkBackupRoutes() {
 			break
 		} else {
 			//nolint:errcheck
-			level.Debug(c.logger).Log("msg", "Route is unavailable", "route", routeFile, "err", configErr)
+			level.Debug(c.logger).Log("msg", "Route is unavailable", "route", routeFile, "err", configErr.Error())
 		}
 	}
 }
@@ -511,7 +513,7 @@ func (c *Controller) checkBackupReceivers() {
 			break
 		} else {
 			//nolint:errcheck
-			level.Debug(c.logger).Log("msg", "Route is unavailable", "receiver", receiverFile, "err", configErr)
+			level.Debug(c.logger).Log("msg", "Route is unavailable", "receiver", receiverFile, "err", configErr.Error())
 		}
 	}
 }

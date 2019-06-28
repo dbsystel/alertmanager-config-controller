@@ -8,8 +8,8 @@ export GO111MODULE := on
 
 # Install all the build and lint dependencies
 setup:
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh
 	go mod download
-	# curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.16.0
 .PHONY: setup
 
 # Run all the tests
@@ -29,12 +29,11 @@ fmt:
 
 # Run all the linters
 lint:
-	./bin/golangci-lint run --tests=false --enable-all --disable=gochecknoglobals,dupl,interfacer ./...
+	./bin/golangci-lint run --tests=false --enable-all --disable=gochecknoglobals,dupl,interfacer,bodyclose ./...
 .PHONY: lint
 
 # Run all the tests and code checks
-# ci: build-ci test lint
-ci: build-ci test
+ci: build-ci test lint
 .PHONY: ci
 
 # Build the controller in ci for alpine image

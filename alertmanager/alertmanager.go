@@ -42,7 +42,6 @@ func (c *APIClient) doPost(url string) (int, error) {
 	}
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		defer resp.Body.Close()
 		for strings.Contains(err.Error(), "connection refused") {
 			//nolint:errcheck,lll
 			level.Error(c.logger).Log(
@@ -51,10 +50,8 @@ func (c *APIClient) doPost(url string) (int, error) {
 			time.Sleep(8 * time.Second)
 			resp, err = c.HTTPClient.Do(req)
 			if err == nil {
-				defer resp.Body.Close()
 				break
 			}
-			defer resp.Body.Close()
 		}
 	}
 

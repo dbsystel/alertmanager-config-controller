@@ -1,3 +1,7 @@
+# 0.2.3 / 2019-06-28
+ * [BUGFIX] Disabled for now bodyclose checking in linter
+ * [BUGFIX] Fixed addContinueIfNotExist handling route
+
 # 0.2.2 / 2019-06-13
  * [ENHANCEMENT] Updated ci release handling
 
