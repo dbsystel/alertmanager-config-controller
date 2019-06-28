@@ -9,18 +9,18 @@ metadata:
 data:
   test_receiver.yaml: |-
     - name: default
-          webhook_configs:
-          - send_resolved: true
-            url: http://localhost
+      webhook_configs:
+      - send_resolved: true
+        url: http://localhost
     - name: test1
       webhook_configs:
       - send_resolved: true
         url: http://localhost
     - name: test2
-          webhook_configs:
-          - send_resolved: true
-            url: http://localhost
+      webhook_configs:
+      - send_resolved: true
+        url: http://localhost
     - name: test3
-          webhook_configs:
-          - send_resolved: true
-            url: http://localhost
+      webhook_configs:
+      - send_resolved: true
+        url: http://localhost
