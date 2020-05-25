@@ -554,6 +554,7 @@ func (c *Controller) buildConfig() error {
 		if err != nil {
 			//nolint:errcheck
 			level.Error(c.logger).Log("msg", "Failed to create alertmanager.yml", "err", err.Error())
+			c.a.ErrorCount.Inc()
 		}
 		defer f.Close()
 		err = t.Execute(f, alertmanagerConfig)
