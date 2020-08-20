@@ -57,6 +57,13 @@ ConfigMap examples can be found [here](configmap-examples).
 --configTemplate # Sets the location of template of the Alertmanager config
 --id # Sets the ID, so the Controller knows which ConfigMaps should be watched
 --key # Sets the key, so the Controller can recognize the template of config in ConfigMap
+--namespace # Only watch specified namespace
+```
+
+## Metrics
+This Controller ignores all configs with syntax errors. There is a metric to monitor the count of wrong configs:
+```
+alertmanager_controller_config_errors_total
 ```
 
 ## Development

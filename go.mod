@@ -3,7 +3,6 @@ module github.com/dbsystel/alertmanager-config-controller
 go 1.12
 
 require (
-	github.com/dbsystel/kube-controller-dbsystel-go-common v0.0.0-20190307121541-2d8f1275b8b2
 	github.com/go-kit/kit v0.8.0
 	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect

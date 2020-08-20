@@ -33,6 +33,7 @@ var (
 	key            = app.Flag("key", "The unique key for alertmanager config").String()
 	reloadURL      = app.Flag("reload-url", "The url to issue requests to reload Alertmanager to").Required().String()
 	addr           = app.Flag("listen-address", "The address to listen on for HTTP requests.").Default(":8080").String()
+	namespace      = app.Flag("namespace", "The namespace to watching.").Default("").String()
 )
 
 var (
@@ -101,7 +102,7 @@ func main() {
 	//Initialize new k8s configmap-controller from common k8s package
 	configMapController := &configmap.ConfigMapController{}
 	configMapController.Controller = controller.New(*a, logger)
-	configMapController.Initialize(k8sClient)
+	configMapController.Initialize(k8sClient, *namespace)
 
 	go startMetricsServer(logger)
 
