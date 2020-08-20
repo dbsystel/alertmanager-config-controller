@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	pclient "github.com/prometheus/client_golang/prometheus"
 )
 
 // APIClient of alertmanager
@@ -20,6 +21,7 @@ type APIClient struct {
 	ID             int
 	Key            string
 	logger         log.Logger
+	ErrorCount     pclient.Counter
 }
 
 // Config of alertmanager
@@ -68,7 +70,7 @@ func (c *APIClient) doPost(url string) (int, error) {
 }
 
 // New return an APIClient
-func New(baseURL *url.URL, configPath string, configTemplate string, id int, key string, logger log.Logger) *APIClient {
+func New(baseURL *url.URL, configPath string, configTemplate string, id int, key string, errorCount pclient.Counter, logger log.Logger) *APIClient {
 	return &APIClient{
 		URL:            baseURL,
 		ConfigPath:     configPath,
@@ -77,5 +79,6 @@ func New(baseURL *url.URL, configPath string, configTemplate string, id int, key
 		ID:             id,
 		Key:            key,
 		logger:         logger,
+		ErrorCount:     errorCount,
 	}
 }

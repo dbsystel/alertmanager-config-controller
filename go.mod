@@ -3,7 +3,6 @@ module github.com/dbsystel/alertmanager-config-controller
 go 1.12
 
 require (
-	github.com/dbsystel/kube-controller-dbsystel-go-common v0.0.0-20190307121541-2d8f1275b8b2
 	github.com/go-kit/kit v0.8.0
 	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
@@ -12,6 +11,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/prometheus/alertmanager v0.17.0
+	github.com/prometheus/client_golang v0.9.2
 	github.com/spf13/pflag v1.0.3 // indirect
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
