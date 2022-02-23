@@ -351,6 +351,10 @@ func (c *Controller) addContinueIfNotExist(routeString string) string {
 	}
 
 	for _, route := range m {
+		if len(route) == 0 {
+			level.Warn(c.logger).Log("msg", "One of your route config is empty")
+			continue
+		}
 		route["continue"] = true
 	}
 
