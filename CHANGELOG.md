@@ -1,3 +1,6 @@
+# 0.2.5 / 2022-02-23
+* [BUGFIX] Avoid panic: assignment to entry in nil map with empty config maps for routes
+
 # 0.2.4 / 2019-06-28
  * [BUGFIX] Fixed incorrect indentation in configmap examples 
 
