@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -16,7 +17,10 @@ import (
 	k8sflag "github.com/dbsystel/kube-controller-dbsystel-go-common/kubernetes/flag"
 	opslog "github.com/dbsystel/kube-controller-dbsystel-go-common/log"
 	logflag "github.com/dbsystel/kube-controller-dbsystel-go-common/log/flag"
+	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	pclient "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -28,6 +32,17 @@ var (
 	id             = app.Flag("id", "The id of Alertmanager").Default("0").Int()
 	key            = app.Flag("key", "The unique key for alertmanager config").String()
 	reloadURL      = app.Flag("reload-url", "The url to issue requests to reload Alertmanager to").Required().String()
+	addr           = app.Flag("listen-address", "The address to listen on for HTTP requests.").Default(":8080").String()
+	namespace      = app.Flag("namespace", "The namespace to watching.").Default("").String()
+)
+
+var (
+	configErrors = pclient.NewCounter(
+		pclient.CounterOpts{
+			Name: "alertmanager_controller_config_errors_total",
+			Help: "Alertmanager Controller Errors Config Total",
+		},
+	)
 )
 
 func main() {
@@ -72,7 +87,8 @@ func main() {
 		os.Exit(2)
 	}
 
-	a := alertmanager.New(URL, *configPath, *configTemplate, *id, *key, logger)
+	pclient.MustRegister(configErrors)
+	a := alertmanager.New(URL, *configPath, *configTemplate, *id, *key, configErrors, logger)
 
 	//nolint:errcheck
 	level.Info(logger).Log("msg", "Starting Alertmanager Controller...")
@@ -86,7 +102,10 @@ func main() {
 	//Initialize new k8s configmap-controller from common k8s package
 	configMapController := &configmap.ConfigMapController{}
 	configMapController.Controller = controller.New(*a, logger)
-	configMapController.Initialize(k8sClient)
+	configMapController.Initialize(k8sClient, *namespace)
+
+	go startMetricsServer(logger)
+
 	//Run initiated configmap-controller as go routine
 	go configMapController.Run(stop, wg)
 
@@ -97,4 +116,12 @@ func main() {
 
 	close(stop) // Tell goroutines to stop themselves
 	wg.Wait()   // Wait for all to be stopped
+}
+
+func startMetricsServer(logger log.Logger) {
+	http.Handle("/metrics", promhttp.Handler())
+	err := http.ListenAndServe(*addr, nil)
+	if err != nil {
+		level.Error(logger).Log("err", err.Error)
+	}
 }

@@ -348,6 +348,7 @@ func (c *Controller) addContinueIfNotExist(routeString string) string {
 	if err != nil {
 		//nolint:errcheck
 		level.Error(c.logger).Log("msg", "Format error in route string: "+routeString, "err", err.Error())
+		return routeString
 	}
 
 	for _, route := range m {
@@ -567,6 +568,7 @@ func (c *Controller) buildConfig() error {
 	} else {
 		//nolint:errcheck
 		level.Error(c.logger).Log("err", configErr.Error())
+		c.a.ErrorCount.Inc()
 	}
 	return configErr
 }
